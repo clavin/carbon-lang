@@ -6,6 +6,7 @@
 
 #include <set>
 
+#include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
@@ -79,6 +80,13 @@ static auto AddExposedNames(const Declaration& declaration,
       auto& alias = cast<AliasDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
           alias.name(), &alias, StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
+    case DeclarationKind::NamespaceDeclaration: {
+      auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(namespace_decl.name(), &namespace_decl,
+                              StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
   }
@@ -609,6 +617,11 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       enclosing_scope.MarkDeclared(alias.name());
       CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), enclosing_scope));
       enclosing_scope.MarkUsable(alias.name());
+      break;
+    }
+    case DeclarationKind::NamespaceDeclaration: {
+      auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
+      enclosing_scope.MarkUsable(namespace_decl.name());
       break;
     }
   }

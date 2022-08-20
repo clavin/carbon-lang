@@ -1830,6 +1830,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::NamespaceDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

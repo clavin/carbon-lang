@@ -498,6 +498,26 @@ class AliasDeclaration : public Declaration {
   Nonnull<Expression*> target_;
 };
 
+class NamespaceDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  NamespaceDeclaration(SourceLocation source_loc, std::string name)
+      : Declaration(AstNodeKind::NamespaceDeclaration, source_loc),
+        name_(std::move(name)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromNamespaceDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  std::string name_;
+};
+
 // Return the name of a declaration, if it has one.
 auto GetName(const Declaration&) -> std::optional<std::string_view>;
 

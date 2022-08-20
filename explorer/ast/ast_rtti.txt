@@ -22,6 +22,7 @@ abstract class Declaration : AstNode;
   class AssociatedConstantDeclaration : Declaration;
   class ImplDeclaration : Declaration;
   class AliasDeclaration : Declaration;
+  class NamespaceDeclaration : Declaration;
 class ImplBinding : AstNode;
 class AlternativeSignature : AstNode;
 abstract class Statement : AstNode;

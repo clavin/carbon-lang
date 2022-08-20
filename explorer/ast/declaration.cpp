@@ -90,6 +90,13 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << " = " << alias.target() << ";\n";
       break;
     }
+
+    case DeclarationKind::NamespaceDeclaration: {
+      const auto& namespace_decl = cast<NamespaceDeclaration>(*this);
+      // TODO: what should be printed out here?
+      out << "namespace " << namespace_decl.name() << ";\n";
+      break;
+    }
   }
 }
 
@@ -151,6 +158,12 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "alias " << alias.name();
       break;
     }
+
+    case DeclarationKind::NamespaceDeclaration: {
+      const auto& namespace_decl = cast<NamespaceDeclaration>(*this);
+      out << "namespace " << namespace_decl.name() << ";\n";
+      break;
+    }
   }
 }
 
@@ -176,6 +189,8 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::AliasDeclaration: {
       return cast<AliasDeclaration>(declaration).name();
     }
+    case DeclarationKind::NamespaceDeclaration:
+      return cast<NamespaceDeclaration>(declaration).name();
   }
 }
 

@@ -4022,6 +4022,8 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
     case DeclarationKind::AliasDeclaration: {
       return Success();
     }
+    case DeclarationKind::NamespaceDeclaration:
+      return Success();
   }
   return Success();
 }
@@ -4097,6 +4099,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       auto& alias = cast<AliasDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(DeclareAliasDeclaration(&alias, scope_info));
       break;
+    }
+
+    case DeclarationKind::NamespaceDeclaration: {
+      CARBON_FATAL() << "Unreachable TypeChecker declare namespace declaration";
     }
   }
   return Success();
