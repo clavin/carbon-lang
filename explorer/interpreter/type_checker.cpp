@@ -4102,7 +4102,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     }
 
     case DeclarationKind::NamespaceDeclaration: {
-      CARBON_FATAL() << "Unreachable TypeChecker declare namespace declaration";
+      // does nothing.
+      break;
     }
   }
   return Success();

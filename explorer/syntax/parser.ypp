@@ -249,6 +249,7 @@
   LIBRARY
   MATCH
   MINUS
+  NAMESPACE
   NOT
   OR
   PACKAGE
@@ -1163,6 +1164,8 @@ declaration:
     }
 | alias_declaration
     { $$ = $1; }
+| NAMESPACE identifier SEMICOLON
+    { $$ = arena->New<NamespaceDeclaration>(context.source_loc(), $2); }
 ;
 impl_kind:
   // Internal
