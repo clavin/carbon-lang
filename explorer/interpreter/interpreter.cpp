@@ -1831,6 +1831,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
     case DeclarationKind::NamespaceDeclaration:
+    case DeclarationKind::DesignatedDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

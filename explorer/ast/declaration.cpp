@@ -4,6 +4,7 @@
 
 #include "explorer/ast/declaration.h"
 
+#include "explorer/common/source_location.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -92,10 +93,15 @@ void Declaration::Print(llvm::raw_ostream& out) const {
     }
 
     case DeclarationKind::NamespaceDeclaration: {
-      const auto& namespace_decl = cast<NamespaceDeclaration>(*this);
-      // TODO: what should be printed out here?
-      out << "namespace " << namespace_decl.name() << ";\n";
+      PrintID(out);
+      out << ";\n";
       break;
+    }
+
+    case DeclarationKind::DesignatedDeclaration: {
+      const auto& designated_decl = cast<DesignatedDeclaration>(*this);
+      PrintID(out);
+      out << "{ " << *designated_decl.decl() << " };\n";
     }
   }
 }
@@ -161,7 +167,13 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
 
     case DeclarationKind::NamespaceDeclaration: {
       const auto& namespace_decl = cast<NamespaceDeclaration>(*this);
-      out << "namespace " << namespace_decl.name() << ";\n";
+      out << "namespace " << namespace_decl.name();
+      break;
+    }
+
+    case DeclarationKind::DesignatedDeclaration: {
+      const auto& designated_decl = cast<DesignatedDeclaration>(*this);
+      out << "designated " << designated_decl.name();
       break;
     }
   }
@@ -191,6 +203,8 @@ auto GetName(const Declaration& declaration)
     }
     case DeclarationKind::NamespaceDeclaration:
       return cast<NamespaceDeclaration>(declaration).name();
+    case DeclarationKind::DesignatedDeclaration:
+      return cast<DesignatedDeclaration>(declaration).name();
   }
 }
 
@@ -308,6 +322,21 @@ void AlternativeSignature::Print(llvm::raw_ostream& out) const {
 
 void AlternativeSignature::PrintID(llvm::raw_ostream& out) const {
   out << name();
+}
+
+auto WrapDeclarationInDesignators(
+    Nonnull<Arena*> arena, Nonnull<FunctionDeclaration*> fn,
+    std::vector<std::pair<std::string, SourceLocation>> designators)
+    -> Nonnull<Declaration*> {
+  auto target = reinterpret_cast<Nonnull<Declaration*>>(fn);
+
+  for (auto it = designators.rbegin(); it != designators.rend(); ++it) {
+    auto designator =
+        arena->New<DesignatedDeclaration>(it->second, it->first, target);
+    target = reinterpret_cast<Nonnull<Declaration*>>(designator);
+  }
+
+  return target;
 }
 
 }  // namespace Carbon

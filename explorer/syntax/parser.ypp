@@ -107,7 +107,7 @@
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
-%type <Nonnull<FunctionDeclaration*>> function_declaration
+%type <Nonnull<Declaration*>> function_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
 %type <std::vector<Nonnull<Declaration*>>> interface_body
@@ -117,6 +117,7 @@
 %type <std::optional<Nonnull<Block*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
 %type <Nonnull<Block*>> block
+%type <std::vector<std::pair<std::string, SourceLocation>>> decl_designator
 %type <std::vector<Nonnull<Statement*>>> statement_list
 %type <Nonnull<Expression*>> primary_expression
 %type <Nonnull<Expression*>> postfix_expression
@@ -981,6 +982,15 @@ block:
   LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE
     { $$ = arena->New<Block>(context.source_loc(), std::move($2)); }
 ;
+decl_designator:
+  // Empty
+    { $$ = {}; }
+| decl_designator identifier PERIOD
+    {
+      $$ = $1;
+      $$.push_back({$2, context.source_loc()});
+    }
+;
 return_term:
   // Empty
     { $$ = ReturnTerm::Omitted(context.source_loc()); }
@@ -1035,23 +1045,23 @@ receiver:
     { $$ = arena->New<AddrPattern>(context.source_loc(), $3); }
 ;
 function_declaration:
-  FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
+  FN decl_designator identifier deduced_params receiver maybe_empty_tuple_pattern return_term block
     {
-      ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6, $7);
+      ErrorOr<Nonnull<FunctionDeclaration*>> fn = FunctionDeclaration::Create(
+          arena, context.source_loc(), $3, $4, $5, $6, $7, $8);
       if (fn.ok()) {
-        $$ = *fn;
+        $$ = Carbon::WrapDeclarationInDesignators(arena, *fn, $2);
       } else {
         context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
       }
     }
-| FN identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
+| FN decl_designator identifier deduced_params receiver maybe_empty_tuple_pattern return_term SEMICOLON
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6, std::nullopt);
+          arena, context.source_loc(), $3, $4, $5, $6, $7, std::nullopt);
       if (fn.ok()) {
-        $$ = *fn;
+        $$ = Carbon::WrapDeclarationInDesignators(arena, *fn, $2);
       } else {
         context.RecordSyntaxError(std::move(fn).error());
         YYERROR;
@@ -1165,7 +1175,10 @@ declaration:
 | alias_declaration
     { $$ = $1; }
 | NAMESPACE identifier SEMICOLON
-    { $$ = arena->New<NamespaceDeclaration>(context.source_loc(), $2); }
+    {
+      $$ = arena->New<NamespaceDeclaration>(
+        context.source_loc(), $2, arena->New<StaticScope>());
+    }
 ;
 impl_kind:
   // Internal

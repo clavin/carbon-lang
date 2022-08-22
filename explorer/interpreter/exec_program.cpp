@@ -36,7 +36,7 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream) {
     **trace_stream << "********** resolving names **********\n";
   }
-  CARBON_RETURN_IF_ERROR(ResolveNames(ast));
+  CARBON_RETURN_IF_ERROR(ResolveNames(arena, ast));
   if (trace_stream) {
     **trace_stream << "********** resolving control flow **********\n";
   }

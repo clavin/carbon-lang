@@ -502,24 +502,57 @@ class NamespaceDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  NamespaceDeclaration(SourceLocation source_loc, std::string name)
+  NamespaceDeclaration(SourceLocation source_loc, std::string name,
+                       Nonnull<StaticScope*> static_scope)
       : Declaration(AstNodeKind::NamespaceDeclaration, source_loc),
-        name_(std::move(name)) {}
+        name_(std::move(name)),
+        static_scope_(static_scope) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromNamespaceDeclaration(node->kind());
   }
 
   auto name() const -> const std::string& { return name_; }
+  auto static_scope() const -> Nonnull<StaticScope*> { return static_scope_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
   std::string name_;
+  Nonnull<StaticScope*> static_scope_;
+};
+
+class DesignatedDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  DesignatedDeclaration(SourceLocation source_loc, std::string name,
+                        Nonnull<Declaration*> decl)
+      : Declaration(AstNodeKind::DesignatedDeclaration, source_loc),
+        name_(std::move(name)),
+        decl_(decl) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromDesignatedDeclaration(node->kind());
+  }
+
+  auto name() const -> const std::string& { return name_; }
+  auto decl() const -> Nonnull<Declaration*> { return decl_; }
+
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  std::string name_;
+  Nonnull<Declaration*> decl_;
 };
 
 // Return the name of a declaration, if it has one.
 auto GetName(const Declaration&) -> std::optional<std::string_view>;
+
+auto WrapDeclarationInDesignators(
+    Nonnull<Arena*> arena, Nonnull<FunctionDeclaration*> fn,
+    std::vector<std::pair<std::string, SourceLocation>> designators)
+    -> Nonnull<Declaration*>;
 
 }  // namespace Carbon
 

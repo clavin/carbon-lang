@@ -4024,6 +4024,8 @@ auto TypeChecker::TypeCheckDeclaration(Nonnull<Declaration*> d,
     }
     case DeclarationKind::NamespaceDeclaration:
       return Success();
+    case DeclarationKind::DesignatedDeclaration:
+      return Success();
   }
   return Success();
 }
@@ -4103,6 +4105,13 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
 
     case DeclarationKind::NamespaceDeclaration: {
       // does nothing.
+      break;
+    }
+
+    case DeclarationKind::DesignatedDeclaration: {
+      auto& designated_decl = cast<DesignatedDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(
+          DeclareDeclaration(designated_decl.decl(), scope_info));
       break;
     }
   }

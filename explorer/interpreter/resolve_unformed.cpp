@@ -301,6 +301,8 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::NamespaceDeclaration:
+    case DeclarationKind::DesignatedDeclaration:
       // do nothing
       break;
   }

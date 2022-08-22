@@ -168,6 +168,11 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
+    case DeclarationKind::DesignatedDeclaration: {
+      auto& designated_decl = cast<DesignatedDeclaration>(*declaration);
+      CARBON_RETURN_IF_ERROR(ResolveControlFlow(designated_decl.decl()));
+      break;
+    }
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
