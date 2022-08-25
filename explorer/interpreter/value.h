@@ -79,6 +79,7 @@ class Value {
     TypeOfParameterizedEntityName,
     TypeOfMemberName,
     StaticArrayType,
+    NamespaceType,
   };
 
   Value(const Value&) = delete;
@@ -1214,6 +1215,25 @@ class StaticArrayType : public Value {
  private:
   Nonnull<const Value*> element_type_;
   size_t size_;
+};
+
+// The type of a namespace. Note that namespaces are not proper values, but only
+// represented this way in explorer.
+class NamespaceType : public Value {
+ public:
+  explicit NamespaceType(Nonnull<NamespaceDeclaration*> namespace_decl)
+      : Value(Kind::NamespaceType), namespace_decl_(namespace_decl) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::NamespaceType;
+  }
+
+  auto decl() const -> Nonnull<const NamespaceDeclaration*> {
+    return namespace_decl_;
+  }
+
+ private:
+  Nonnull<NamespaceDeclaration*> namespace_decl_;
 };
 
 }  // namespace Carbon

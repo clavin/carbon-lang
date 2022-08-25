@@ -140,6 +140,15 @@ static auto GetMember(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       return arena->New<FunctionValue>(&(*fun)->declaration(),
                                        &class_type.bindings());
     }
+    case Value::Kind::NamespaceType: {
+      const NamespaceType& namespace_type = cast<NamespaceType>(*v);
+      auto result = namespace_type.decl()->static_scope()->Resolve(
+          std::string(f), source_loc);
+      if (!result.ok() || !result->constant_value().has_value()) {
+        return RuntimeError(source_loc) << "member " << f << " not in " << *v;
+      }
+      return *result->constant_value();
+    }
     default:
       CARBON_FATAL() << "field access not allowed for value " << *v;
   }
@@ -521,6 +530,10 @@ void Value::Print(llvm::raw_ostream& out) const {
           << "]";
       break;
     }
+    case Value::Kind::NamespaceType: {
+      out << "namespace";
+      break;
+    }
   }
 }
 
@@ -731,6 +744,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::MemberName:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::NamespaceType:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -845,6 +859,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
+    case Value::Kind::NamespaceType:
       return TypeEqual(v1, v2, equality_ctx);
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:

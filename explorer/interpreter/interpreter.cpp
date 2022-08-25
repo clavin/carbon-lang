@@ -647,6 +647,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::StaticArrayType:
     case Value::Kind::MemberName:
+    case Value::Kind::NamespaceType:
       // TODO: add `CARBON_CHECK(TypeEqual(type, value->dynamic_type()))`, once
       // we have Value::dynamic_type.
       return value;

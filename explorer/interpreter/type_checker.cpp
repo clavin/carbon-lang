@@ -13,6 +13,7 @@
 #include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/static_scope.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/interpreter/impl_scope.h"
@@ -213,6 +214,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfInterfaceType:
     case Value::Kind::TypeOfConstraintType:
     case Value::Kind::TypeOfChoiceType:
+    case Value::Kind::NamespaceType:
       // A value of one of these types is itself always a type.
       return true;
   }
@@ -245,6 +247,7 @@ static auto IsType(Nonnull<const Value*> value, bool concrete = false) -> bool {
       return false;
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::NamespaceType:
       // Names aren't first-class values, and their types aren't first-class
       // types.
       return false;
@@ -874,7 +877,8 @@ auto TypeChecker::ArgumentDeduction(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
-    case Value::Kind::UninitializedValue: {
+    case Value::Kind::UninitializedValue:
+    case Value::Kind::NamespaceType: {
       // Argument deduction within the parameters of a parameterized class type
       // or interface type can compare values, rather than types.
       // TODO: Deduce within the values where possible.
@@ -1156,6 +1160,7 @@ auto TypeChecker::Substitute(
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::NamespaceType:
       // TODO: We should substitute into the value and produce a new type of
       // type for it.
       return type;
@@ -1810,6 +1815,23 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             default:
               return CompilationError(access.source_loc())
                      << "unsupported member access into type " << *type;
+          }
+        }
+        case Value::Kind::NamespaceType: {
+          const NamespaceType& namespace_type =
+              cast<NamespaceType>(object_type);
+          CARBON_ASSIGN_OR_RETURN(
+              ValueNodeView result,
+              namespace_type.decl()->static_scope()->Resolve(
+                  access.member_name(), e->source_loc()));
+          if (auto* target = dyn_cast<Declaration>(&result.base())) {
+            access.set_member(Member(target));
+            access.set_static_type(&target->static_type());
+            return Success();
+          } else {
+            return CompilationError(e->source_loc())
+                   << "namespace resolved to non-declaration " << result
+                   << " in " << *e;
           }
         }
         default:
@@ -3924,6 +3946,7 @@ static bool IsValidTypeForAliasTarget(Nonnull<const Value*> type) {
     case Value::Kind::TypeOfChoiceType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::NamespaceType:
       return true;
   }
 }
@@ -4104,7 +4127,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     }
 
     case DeclarationKind::NamespaceDeclaration: {
-      // does nothing.
+      auto& namespace_decl = cast<NamespaceDeclaration>(*d);
+      auto* namespace_type = arena_->New<NamespaceType>(&namespace_decl);
+      namespace_decl.set_static_type(namespace_type);
+      namespace_decl.set_constant_value(namespace_type);
       break;
     }
 
