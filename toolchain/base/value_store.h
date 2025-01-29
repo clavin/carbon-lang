@@ -68,13 +68,13 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
+    CARBON_DCHECK(HasId(id), "{0}", id);
     return values_[id.index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
+    CARBON_DCHECK(HasId(id), "{0}", id);
     return values_[id.index];
   }
 
@@ -95,6 +95,15 @@ class ValueStore
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
     mem_usage.Collect(label.str(), values_);
+  }
+
+  // Checks whether the ID has a value in this store.
+  //
+  // This is usually unnecessary to check, but can add safety to debug code.
+  // Note that the ID may originate from a different store with a different
+  // value.
+  auto HasId(IdT id) const -> bool {
+    return id.index >= 0 && static_cast<size_t>(id.index) < size();
   }
 
   auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
